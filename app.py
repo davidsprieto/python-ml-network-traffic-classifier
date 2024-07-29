@@ -264,13 +264,18 @@ def predict():
     feature_values = np.array(feature_values).reshape(1, -1)
 
     if st.button("Predict"):
-        model_path = model_files[technique][model_name]
-        print(model_path)
-        with open(model_path, 'rb') as file:
-            model = pickle.load(file)
+        if np.all(feature_values == 0):
+            st.error("Error: All feature values cannot be 0. Please enter valid values.")
+        else:
+            try:
+                model_path = model_files[technique][model_name]
+                with open(model_path, 'rb') as file:
+                    model = pickle.load(file)
 
-        prediction = model.predict(feature_values)
-        st.write(f"The predicted class is: {'Benign' if prediction == 0 else 'Attack'}")
+                prediction = model.predict(feature_values)
+                st.write(f"The predicted class is: {'Benign' if prediction == 0 else 'Attack'}")
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
 
 
 # Page navigation
