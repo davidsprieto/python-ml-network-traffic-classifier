@@ -1,0 +1,19 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Traffic Classifier</title>
+</head>
+<body>
+    <h1>Network Traffic Classifier</h1>
+    <form id="predict-form">
+        <textarea id="input-data" rows="10" cols="50"></textarea><br>
+        <button type="submit">Predict</button>
+    </form>
+    <div id="results"></div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
