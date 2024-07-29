@@ -1,3 +1,4 @@
+// CODE USED FOR AN EXTERNAL JS FILE - NOT NEEDED WITH STREAMLIT
 // document.getElementById('predict-form').addEventListener('submit', function (e) {
 //     e.preventDefault();
 //
