@@ -1,19 +1,18 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Network Traffic Classifier</title>
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
 </head>
 <body>
     <h1>Network Traffic Classifier</h1>
-    <form id="predict-form">
-        <textarea id="input-data" rows="10" cols="50"></textarea><br>
+    <form id="prediction-form">
+        <label for="data">Enter features for prediction (comma-separated):</label><br><br>
+        <textarea id="data" rows="4" cols="50" placeholder="Flow Duration, Total Fwd Packets, ..., Feature N"></textarea><br><br>
         <button type="submit">Predict</button>
     </form>
-    <div id="results"></div>
-
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <h2>Prediction Result:</h2>
+    <p id="result"></p>
 </body>
 </html>
