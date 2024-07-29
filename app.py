@@ -186,14 +186,14 @@ def about():
     """)
 
 
-# def data():
-#     st.title("Data Exploration")
-#     st.write("""
-#     Here, you can explore the dataset used for training the models. This includes visualizations
-#     and statistics that help understand the features and their distributions.
-#     """)
-#     # Add any data exploration code and visualizations here
-#     # For example, you can include charts and summary statistics of your dataset
+def data():
+    st.title("Data Exploration")
+    st.write("""
+    Here, you can explore the dataset used for training the models. This includes visualizations
+    and statistics that help understand the features and their distributions.
+    """)
+    # Add any data exploration code and visualizations here
+    # For example, you can include charts and summary statistics of your dataset
 
 
 def feature_selection():
@@ -280,14 +280,14 @@ def predict():
 
 # Page navigation
 page = st.sidebar.radio("Navigate to:",
-                        ["Home", "About", "Feature Selection Techniques", "Make a Prediction"])
+                        ["Home", "About", "Data Exploration", "Feature Selection Techniques", "Make a Prediction"])
 
 if page == "Home":
     home()
 elif page == "About":
     about()
-# elif page == "Data Exploration":
-#     data()
+elif page == "Data Exploration":
+    data()
 elif page == "Feature Selection Techniques":
     feature_selection()
 elif page == "Make a Prediction":
