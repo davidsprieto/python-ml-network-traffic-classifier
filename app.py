@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Load the models for each technique and classifier
 model_files = {
@@ -167,7 +169,9 @@ def about():
     st.write("""
     This project leverages multiple feature selection and extraction techniques combined with various 
     machine learning models to classify network traffic data. The primary goal is to identify whether 
-    the network traffic is benign or an attack (e.g., DoS attack). The feature techniques include:
+    the network traffic is benign or an attack (e.g., DoS attack). 
+    
+    The feature techniques include:
 
     - SelectKBest
     - Removing Constant Features
@@ -189,11 +193,55 @@ def about():
 def data():
     st.title("Data Exploration")
     st.write("""
-    Here, you can explore the dataset used for training the models. This includes visualizations
-    and statistics that help understand the features and their distributions.
-    """)
-    # Add any data exploration code and visualizations here
-    # For example, you can include charts and summary statistics of your dataset
+        Here, you can explore the dataset used for training the models. This includes visualizations
+        and statistics that help understand the features and their distributions.
+        """)
+
+    # Load your dataset
+    data = pd.read_csv('ide_data_cleaned.csv')
+
+    # Display the first few rows of the dataset
+    st.write("### Dataset Overview")
+    st.dataframe(data.head())
+
+    # Display summary statistics
+    st.write("### Summary Statistics")
+    st.write(data.describe())
+
+    # Distribution of the target variable
+    st.write("### Target Variable Distribution")
+    plt.figure(figsize=(10, 6))
+    sns.countplot(x='Label', data=data)
+    plt.title('Distribution of Target Variable')
+    plt.xlabel('Label')
+    plt.ylabel('Count')
+    st.pyplot(plt)
+
+    # Correlation matrix
+    st.write("### Correlation Matrix")
+    plt.figure(figsize=(12, 10))
+    correlation_matrix = data.drop(columns=["Label"]).corr()
+    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
+    plt.title('Correlation Matrix')
+    st.pyplot(plt)
+
+    # Histograms for numeric features
+    st.write("### Feature Distributions")
+    numeric_features = data.select_dtypes(include=['float64', 'int64']).columns
+    for feature in numeric_features:
+        st.write(f"#### Distribution of {feature}")
+        plt.figure(figsize=(10, 6))
+        sns.histplot(data[feature], kde=True, bins=30)
+        plt.title(f'Distribution of {feature}')
+        st.pyplot(plt)
+
+    # Pair plot for a subset of features
+    st.write("### Pairplot of Features")
+    subset_features = numeric_features[:5]  # Adjust this based on dataset
+    pairplot_data = data[subset_features]
+    pairplot_data['Label'] = data['Label']
+    sns.pairplot(pairplot_data, hue='Label', diag_kind='kde')
+    st.pyplot(plt)
 
 
 def feature_selection():
