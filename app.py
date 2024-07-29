@@ -3,8 +3,6 @@ import streamlit as st
 import numpy as np
 import pickle
 
-app = Flask(__name__)
-
 # Load the trained model
 with open('model.pkl', 'rb') as file:
     model = pickle.load(file)
@@ -51,6 +49,8 @@ if st.button('Predict'):
 
 
 # CODE USED FOR AN EXTERNAL HTML & JS FILE - NOT NEEDED WITH STREAMLIT
+# app = Flask(__name__)
+#
 # @app.route('/')
 # def index():
 #     return render_template('index.html')
