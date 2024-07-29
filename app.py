@@ -156,7 +156,7 @@ feature_sets = {
 
 # Define your pages as functions
 def home():
-    st.title("ML Network Traffic Classifier")
+    st.title("Network Traffic Classifier - Benign or Attack")
     st.write("""
     Welcome to the Network Traffic Classifier web app! This application uses various machine learning techniques 
     to classify network traffic as either benign or an attack. You can navigate through different sections using 
@@ -297,7 +297,7 @@ def predict():
     st.title("Make a Prediction")
     st.write("""
     Select the feature selection technique and model you want to use for making predictions. 
-    Enter the feature values for the selected technique and click 'Predict' to classify the network traffic.
+    Enter the feature values for the selected technique and click 'Predict' to classify the network traffic as either benign or attack.
     """)
 
     technique = st.selectbox("Select Feature Technique:",
