@@ -5,6 +5,7 @@ import pickle
 import matplotlib.pyplot as plt
 import seaborn as sns
 import tempfile
+import re
 
 # Load the models for each technique and classifier
 model_files = {
@@ -316,6 +317,14 @@ def predict():
     Ensure that the CSV contains all necessary fields.
     """)
 
+    # unify the columns/features names
+    def unify_column_name(name: str) -> str:
+        name = name.lower().replace(' ', '_')  # replace all spaces with underscores
+        name = re.sub(r'[^\w]', '', name)  # remove all non-alphanumeric characters
+        if name.endswith('ss'):
+            name = name[:-1]  # if the name ends with 'ss', remove the 'ss' and only have it be 's'
+        return name
+
     # Select feature technique and model
     technique = st.selectbox("Select Feature Technique:",
                              list(feature_sets.keys()))
@@ -347,6 +356,9 @@ def predict():
         # Read the uploaded file
         try:
             data = pd.read_csv(temp_file_path)
+
+            # Standardize column names
+            data.columns = data.columns.map(lambda x: unify_column_name(x))
 
             # Check for necessary fields
             required_features = feature_sets[technique]
