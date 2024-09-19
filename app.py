@@ -4,6 +4,7 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 import seaborn as sns
+import tempfile
 
 # Load the models for each technique and classifier
 model_files = {
@@ -252,7 +253,8 @@ def feature_selection():
     """)
 
     technique = st.selectbox("Select Feature Selection Technique",
-                             ["SelectKBest", "Constant Features Removed", "Near-Zero Variance Features Removed", "LASSO",
+                             ["SelectKBest", "Constant Features Removed", "Near-Zero Variance Features Removed",
+                              "LASSO",
                               "Random Forest",
                               "PCA"])
 
@@ -293,37 +295,82 @@ def feature_selection():
         st.write(feature_scores_df)
 
 
+# Define allowed file types and max file size
+ALLOWED_EXTENSIONS = {'csv'}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def sanitize_filename(filename):
+    # Implement filename sanitization
+    return ''.join(c for c in filename if c.isalnum() or c in ('_', '.')).rstrip()
+
+
 def predict():
     st.title("Make a Prediction")
     st.write("""
-    Select the feature selection technique and model you want to use for making predictions. 
-    Enter the feature values for the selected technique and click 'Predict' to classify the network traffic as either benign or attack.
+    Select the feature selection technique and model, then upload your CSV file for prediction.
+    Ensure that the CSV contains all necessary fields.
     """)
 
+    # Select feature technique and model
     technique = st.selectbox("Select Feature Technique:",
-                             ["SelectKBest", "Constant Features Removed", "Near-Zero Variance Features Removed", "LASSO", "Random Forest",
-                              "PCA"])
+                             list(feature_sets.keys()))
 
     model_name = st.selectbox("Select Model:",
                               ["Logistic Regression", "SVM", "k-NN", "Random Forest", "Gradient Boosting"])
 
-    features = feature_sets[technique]
-    feature_values = [st.number_input(f'{feature.replace("_", " ").title()}:') for feature in features]
-    feature_values = np.array(feature_values).reshape(1, -1)
+    uploaded_file = st.file_uploader("Choose a CSV file", type=['csv'])
 
-    if st.button("Predict"):
-        if np.all(feature_values == 0):
-            st.error("Error: All feature values cannot be 0. Please enter valid values.")
-        else:
-            try:
+    if uploaded_file is not None:
+        # Check file size
+        if uploaded_file.size > MAX_FILE_SIZE:
+            st.error("Error: File size exceeds the maximum limit of 10 MB.")
+            return
+
+        # Validate file type
+        if not allowed_file(uploaded_file.name):
+            st.error("Error: Only CSV files are allowed.")
+            return
+
+        # Sanitize the filename
+        sanitized_filename = sanitize_filename(uploaded_file.name)
+
+        # Save the uploaded file temporarily
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv", prefix=sanitized_filename) as temp_file:
+            temp_file.write(uploaded_file.getvalue())
+            temp_file_path = temp_file.name
+
+        # Read the uploaded file
+        try:
+            data = pd.read_csv(temp_file_path)
+
+            # Check for necessary fields
+            required_features = feature_sets[technique]
+            missing_features = [feature for feature in required_features if feature not in data.columns]
+
+            if missing_features:
+                st.error(f"Error: The following required features are missing: {', '.join(missing_features)}")
+                return
+
+            # Process data and make predictions
+            feature_values = data[required_features].values
+            predictions = []
+            for values in feature_values:
+                values = np.array(values).reshape(1, -1)
                 model_path = model_files[technique][model_name]
                 with open(model_path, 'rb') as file:
                     model = pickle.load(file)
+                prediction = model.predict(values)
+                predictions.append('Benign' if prediction == 0 else 'Attack')
 
-                prediction = model.predict(feature_values)
-                st.write(f"The predicted class is: {'Benign' if prediction == 0 else 'Attack'}")
-            except Exception as e:
-                st.error(f"An error occurred: {e}")
+            st.write(f"The predicted classes are: {predictions}")
+
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
 
 
 # Page navigation
