@@ -4,7 +4,6 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 import seaborn as sns
-import tempfile
 import re
 
 # Load the models for each technique and classifier
@@ -298,7 +297,7 @@ def feature_selection():
 
 # Define allowed file types and max file size
 ALLOWED_EXTENSIONS = {'csv'}
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+MAX_FILE_SIZE = 200 * 1024 * 1024  # 200 MB
 
 
 def allowed_file(filename):
