@@ -306,83 +306,85 @@ def allowed_file(filename):
 
 
 def sanitize_filename(filename):
-    # Implement filename sanitization
     return ''.join(c for c in filename if c.isalnum() or c in ('_', '.')).rstrip()
+
+
+def unify_column_name(name: str) -> str:
+    name = name.strip().lower().replace(' ', '_')
+    name = re.sub(r'[^\w]', '', name)
+    if name.endswith('ss'):
+        name = name[:-1]
+    return name
 
 
 def predict():
     st.title("Make a Prediction")
     st.write("""
-    Select the feature selection technique and model, then upload your CSV file for prediction.
-    Ensure that the CSV contains all necessary fields.
+    Upload a CSV file with feature values to classify each row. Select the feature selection technique and model.
+    Ensure that all necessary fields are filled. Refer to 'Feature Selection Techniques' to review required fields.
     """)
 
-    # unify the columns/features names
-    def unify_column_name(name: str) -> str:
-        name = name.lower().replace(' ', '_')  # replace all spaces with underscores
-        name = re.sub(r'[^\w]', '', name)  # remove all non-alphanumeric characters
-        if name.endswith('ss'):
-            name = name[:-1]  # if the name ends with 'ss', remove the 'ss' and only have it be 's'
-        return name
-
     # Select feature technique and model
-    technique = st.selectbox("Select Feature Technique:",
-                             list(feature_sets.keys()))
-
+    technique = st.selectbox("Select Feature Technique:", list(feature_sets.keys()))
     model_name = st.selectbox("Select Model:",
                               ["Logistic Regression", "SVM", "k-NN", "Random Forest", "Gradient Boosting"])
 
-    uploaded_file = st.file_uploader("Choose a CSV file", type=['csv'])
-
+    # File upload
+    uploaded_file = st.file_uploader("Upload a CSV file with feature values", type="csv")
     if uploaded_file is not None:
-        # Check file size
-        if uploaded_file.size > MAX_FILE_SIZE:
-            st.error("Error: File size exceeds the maximum limit of 10 MB.")
-            return
-
-        # Validate file type
+        # Check file type
         if not allowed_file(uploaded_file.name):
-            st.error("Error: Only CSV files are allowed.")
-            return
+            st.error("Invalid file type. Please upload a CSV file.")
+        else:
+            # Check file size
+            file_size = uploaded_file.size
+            if file_size > MAX_FILE_SIZE:
+                st.error("File size exceeds the 10 MB limit. Please upload a smaller file.")
+            else:
+                # Sanitize filename
+                sanitized_filename = sanitize_filename(uploaded_file.name)
+                st.write(f"Sanitized filename: {sanitized_filename}")
 
-        # Sanitize the filename
-        sanitized_filename = sanitize_filename(uploaded_file.name)
+                # Read and process the file
+                data = pd.read_csv(uploaded_file)
+                data.columns = [unify_column_name(col) for col in data.columns]  # Unify column names
+                st.write(data.head())  # Display the first few rows of the dataframe
 
-        # Save the uploaded file temporarily
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv", prefix=sanitized_filename) as temp_file:
-            temp_file.write(uploaded_file.getvalue())
-            temp_file_path = temp_file.name
+                # Check if uploaded file contains required columns
+                features = feature_sets[technique]
+                missing_features = [feature for feature in features if unify_column_name(feature) not in data.columns]
 
-        # Read the uploaded file
-        try:
-            data = pd.read_csv(temp_file_path)
+                if not missing_features:
+                    st.success("All required columns are present.")
+                else:
+                    st.warning("The uploaded file is missing some required columns.")
+                    # Show input fields for missing features
+                    for feature in features:
+                        if unify_column_name(feature) not in data.columns:
+                            data[unify_column_name(feature)] = st.number_input(f"Enter {feature}:",
+                                                                               key=f"input_{feature}")
 
-            # Standardize column names
-            data.columns = data.columns.map(lambda x: unify_column_name(x))
+                # Prepare features for prediction
+                feature_columns = [unify_column_name(feature) for feature in features]
+                missing_feature_columns = [col for col in feature_columns if col not in data.columns]
+                if missing_feature_columns:
+                    # If any columns are missing, fill them with NaN or default values
+                    for col in missing_feature_columns:
+                        data[col] = np.nan
 
-            # Check for necessary fields
-            required_features = feature_sets[technique]
-            missing_features = [feature for feature in required_features if feature not in data.columns]
+                # Convert features to numpy array and make predictions
+                input_values = data[feature_columns].fillna(0).values
+                try:
+                    model_path = model_files[technique][model_name]
+                    with open(model_path, 'rb') as file:
+                        model = pickle.load(file)
+                    predictions = model.predict(input_values)
+                    data['Prediction'] = ['Benign' if pred == 0 else 'Attack' for pred in predictions]
 
-            if missing_features:
-                st.error(f"Error: The following required features are missing: {', '.join(missing_features)}")
-                return
-
-            # Process data and make predictions
-            feature_values = data[required_features].values
-            predictions = []
-            for values in feature_values:
-                values = np.array(values).reshape(1, -1)
-                model_path = model_files[technique][model_name]
-                with open(model_path, 'rb') as file:
-                    model = pickle.load(file)
-                prediction = model.predict(values)
-                predictions.append('Benign' if prediction == 0 else 'Attack')
-
-            st.write(f"The predicted classes are: {predictions}")
-
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
+                    # Display the DataFrame with predictions
+                    st.write(data)
+                except Exception as e:
+                    st.error(f"An error occurred: {e}")
 
 
 # Page navigation
