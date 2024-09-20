@@ -346,7 +346,12 @@ def predict():
 
                 # Read and process the file
                 data = pd.read_csv(uploaded_file)
-                data.columns = [unify_column_name(col) for col in data.columns]  # Unify column names
+
+                # Drop duplicate data values
+                data = data.drop_duplicates()
+
+                # Unify column names
+                data.columns = [unify_column_name(col) for col in data.columns]
 
                 # Drop columns not used for prediction
                 features = feature_sets[technique]
@@ -359,6 +364,7 @@ def predict():
                     if data[column].apply(np.isinf).any():
                         cols_with_infinite.append(column)
 
+                # If there are columns with infinite values, replace them with 'na' values then replace 'na' with the column mean
                 if cols_with_infinite:
                     data[cols_with_infinite] = data[cols_with_infinite].replace([np.inf, -np.inf], np.nan)
                     data[cols_with_infinite] = data[cols_with_infinite].fillna(data[cols_with_infinite].mean())
