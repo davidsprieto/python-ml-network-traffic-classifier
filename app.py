@@ -364,7 +364,7 @@ def predict():
                     if data[column].apply(np.isinf).any():
                         cols_with_infinite.append(column)
 
-                # If there are columns with infinite values, replace them with 'na' values then replace 'na' with the column mean
+                # If there are columns with infinite values, replace them with 'na' values then replace the 'na' values with the column mean
                 if cols_with_infinite:
                     data[cols_with_infinite] = data[cols_with_infinite].replace([np.inf, -np.inf], np.nan)
                     data[cols_with_infinite] = data[cols_with_infinite].fillna(data[cols_with_infinite].mean())
@@ -376,7 +376,10 @@ def predict():
                 if missing_features:
                     st.warning("The uploaded file is missing some required columns.")
                     for feature in missing_features:
-                        data[feature] = st.number_input(f"Enter {feature}:", key=f"input_{feature}")
+                        # Allow the user to input a single value that will be used for all rows
+                        user_value = st.number_input(f"Enter a value for {feature} (applies to all rows):",
+                                                     key=f"{feature}_input")
+                        data[unify_column_name(feature)] = user_value
                 else:
                     st.success("All required columns are present.")
 
