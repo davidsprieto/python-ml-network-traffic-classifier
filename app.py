@@ -347,6 +347,20 @@ def predict():
                 # Read and process the file
                 data = pd.read_csv(uploaded_file)
                 data.columns = [unify_column_name(col) for col in data.columns]  # Unify column names
+
+                # list to contain columns with infinite values
+                cols_with_infinite = []
+
+                # loop through each column that is a 'number' type (int64, float64) to check for infinite values
+                for column in data.select_dtypes(include=[np.number]).columns:
+                    if data[column].apply(np.isinf).any():
+                        cols_with_infinite.append(column)
+
+                # replace all infinite values with NaN & fill NaNs with the mean of the column
+                if cols_with_infinite:
+                    data[cols_with_infinite] = data[cols_with_infinite].replace([np.inf, -np.inf], np.nan)
+                    data[cols_with_infinite] = data[cols_with_infinite].fillna(data[cols_with_infinite].mean())
+
                 st.write(data.head())  # Display the first few rows of the dataframe
 
                 # Check if uploaded file contains required columns
