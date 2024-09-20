@@ -331,11 +331,11 @@ def predict():
     # File upload
     uploaded_file = st.file_uploader("Upload a CSV file with feature values", type="csv")
     if uploaded_file is not None:
-        # Check the file type
+        # Check file type
         if not allowed_file(uploaded_file.name):
             st.error("Invalid file type. Please upload a CSV file.")
         else:
-            # Check the file size
+            # Check file size
             file_size = uploaded_file.size
             if file_size > MAX_FILE_SIZE:
                 st.error("File size exceeds the 10 MB limit. Please upload a smaller file.")
@@ -355,13 +355,10 @@ def predict():
 
                 # Handle infinite values
                 cols_with_infinite = []
-
-                # Loop through numeric columns to check for infinite values
                 for column in data.select_dtypes(include=[np.number]).columns:
                     if data[column].apply(np.isinf).any():
                         cols_with_infinite.append(column)
 
-                # Replace infinite values with NaN and fill NaNs with the column mean
                 if cols_with_infinite:
                     data[cols_with_infinite] = data[cols_with_infinite].replace([np.inf, -np.inf], np.nan)
                     data[cols_with_infinite] = data[cols_with_infinite].fillna(data[cols_with_infinite].mean())
@@ -370,10 +367,8 @@ def predict():
 
                 # Check for missing columns and prompt for input if any are missing
                 missing_features = [feature for feature in feature_columns if feature not in data.columns]
-
                 if missing_features:
                     st.warning("The uploaded file is missing some required columns.")
-                    # Show input fields for missing features
                     for feature in missing_features:
                         data[feature] = st.number_input(f"Enter {feature}:", key=f"input_{feature}")
                 else:
@@ -392,10 +387,17 @@ def predict():
                     predictions = model.predict(input_values)
 
                     # Add predictions to the DataFrame
-                    data['Prediction'] = ['Benign' if pred == 0 else 'Attack' for pred in predictions]
+                    data['prediction'] = ['BENIGN' if pred == 0 else 'ATTACK' for pred in predictions]
 
-                    # Display the DataFrame with predictions
-                    st.write(data)
+                    # Define a function to highlight rows with "Attack"
+                    def highlight_attack(row):
+                        return ['background-color: red' if row['prediction'] == 'ATTACK' else '' for _ in row]
+
+                    # Apply the highlighting function to the DataFrame
+                    styled_data = data.style.apply(highlight_attack, axis=1)
+
+                    # Display the DataFrame with predictions and row highlighting
+                    st.dataframe(styled_data)
                 except Exception as e:
                     st.error(f"An error occurred: {e}")
 
