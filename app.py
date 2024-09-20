@@ -331,11 +331,11 @@ def predict():
     # File upload
     uploaded_file = st.file_uploader("Upload a CSV file with feature values", type="csv")
     if uploaded_file is not None:
-        # Check file type
+        # Check the file type
         if not allowed_file(uploaded_file.name):
             st.error("Invalid file type. Please upload a CSV file.")
         else:
-            # Check file size
+            # Check the file size
             file_size = uploaded_file.size
             if file_size > MAX_FILE_SIZE:
                 st.error("File size exceeds the 10 MB limit. Please upload a smaller file.")
@@ -348,50 +348,50 @@ def predict():
                 data = pd.read_csv(uploaded_file)
                 data.columns = [unify_column_name(col) for col in data.columns]  # Unify column names
 
-                # list to contain columns with infinite values
+                # Drop columns not used for prediction
+                features = feature_sets[technique]
+                feature_columns = [unify_column_name(feature) for feature in features]
+                data = data[feature_columns]  # Keep only the required columns
+
+                # Handle infinite values
                 cols_with_infinite = []
 
-                # loop through each column that is a 'number' type (int64, float64) to check for infinite values
+                # Loop through numeric columns to check for infinite values
                 for column in data.select_dtypes(include=[np.number]).columns:
                     if data[column].apply(np.isinf).any():
                         cols_with_infinite.append(column)
 
-                # replace all infinite values with NaN & fill NaNs with the mean of the column
+                # Replace infinite values with NaN and fill NaNs with the column mean
                 if cols_with_infinite:
                     data[cols_with_infinite] = data[cols_with_infinite].replace([np.inf, -np.inf], np.nan)
                     data[cols_with_infinite] = data[cols_with_infinite].fillna(data[cols_with_infinite].mean())
 
                 st.write(data.head())  # Display the first few rows of the dataframe
 
-                # Check if uploaded file contains required columns
-                features = feature_sets[technique]
-                missing_features = [feature for feature in features if unify_column_name(feature) not in data.columns]
+                # Check for missing columns and prompt for input if any are missing
+                missing_features = [feature for feature in feature_columns if feature not in data.columns]
 
-                if not missing_features:
-                    st.success("All required columns are present.")
-                else:
+                if missing_features:
                     st.warning("The uploaded file is missing some required columns.")
                     # Show input fields for missing features
-                    for feature in features:
-                        if unify_column_name(feature) not in data.columns:
-                            data[unify_column_name(feature)] = st.number_input(f"Enter {feature}:",
-                                                                               key=f"input_{feature}")
+                    for feature in missing_features:
+                        data[feature] = st.number_input(f"Enter {feature}:", key=f"input_{feature}")
+                else:
+                    st.success("All required columns are present.")
 
                 # Prepare features for prediction
-                feature_columns = [unify_column_name(feature) for feature in features]
-                missing_feature_columns = [col for col in feature_columns if col not in data.columns]
-                if missing_feature_columns:
-                    # If any columns are missing, fill them with NaN or default values
-                    for col in missing_feature_columns:
-                        data[col] = np.nan
-
-                # Convert features to numpy array and make predictions
                 input_values = data[feature_columns].fillna(0).values
+
+                # Load the model and make predictions
                 try:
                     model_path = model_files[technique][model_name]
                     with open(model_path, 'rb') as file:
                         model = pickle.load(file)
+
+                    # Make predictions for each row
                     predictions = model.predict(input_values)
+
+                    # Add predictions to the DataFrame
                     data['Prediction'] = ['Benign' if pred == 0 else 'Attack' for pred in predictions]
 
                     # Display the DataFrame with predictions
