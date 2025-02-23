@@ -1,6 +1,6 @@
-<h1 align=center>Python - Machine Learning Network Traffic Classifier</h1>
+<h1 align=center>Network Traffic Classifier</h1>
 
-ML web application developed using:
+Machine learning web application developed using:
 
 - Python
 - SQLite
