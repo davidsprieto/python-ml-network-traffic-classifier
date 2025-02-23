@@ -1,6 +1,6 @@
 <h1 align=center>Network Traffic Classifier</h1>
 
-Machine learning web application developed using:
+Machine learning web application developed with:
 
 - Python
 - SQLite
