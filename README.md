@@ -1,5 +1,11 @@
 <h1 align=center>Python - Machine Learning Network Traffic Classifier</h1>
 
+ML web application developed using:
+
+- Python
+- SQLite
+- Streamlit
+
 This project leverages multiple feature selection and extraction techniques combined with various 
 machine learning models to classify network traffic data. The primary goal is to identify whether 
 the network traffic is benign or an attack (e.g., DoS attack). 
